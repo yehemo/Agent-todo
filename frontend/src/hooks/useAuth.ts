@@ -5,16 +5,21 @@ import { authApi } from '../api/auth.api'
 import { useAuthStore } from '../stores/authStore'
 import type { LoginPayload, RegisterPayload } from '../types/auth.types'
 
+interface LoginMutationPayload extends LoginPayload {
+  rememberMe: boolean
+}
+
 export function useLogin() {
   const setAuth = useAuthStore((s) => s.setAuth)
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (payload: LoginPayload) => authApi.login(payload),
-    onSuccess: (data) => {
+    mutationFn: ({ rememberMe: _rememberMe, ...payload }: LoginMutationPayload) =>
+      authApi.login(payload),
+    onSuccess: (data, variables) => {
       queryClient.clear()
-      setAuth(data.data.token, data.data.user)
+      setAuth(data.data.token, data.data.user, variables.rememberMe)
       navigate('/dashboard')
     },
     onError: () => {
@@ -32,7 +37,8 @@ export function useRegister() {
     mutationFn: (payload: RegisterPayload) => authApi.register(payload),
     onSuccess: (data) => {
       queryClient.clear()
-      setAuth(data.data.token, data.data.user)
+      // Registration never has "remember me" — use session storage
+      setAuth(data.data.token, data.data.user, false)
       navigate('/dashboard')
     },
     onError: () => {

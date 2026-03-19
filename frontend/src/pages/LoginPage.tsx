@@ -5,11 +5,37 @@ import { Button } from '../components/ui/Button'
 import { useLogin } from '../hooks/useAuth'
 import type { LoginPayload } from '../types/auth.types'
 
+const SAVED_EMAIL_KEY = 'taskflow-saved-email'
+
+interface LoginFormValues extends LoginPayload {
+  rememberMe: boolean
+}
+
 export function LoginPage() {
   const login = useLogin()
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginPayload>()
 
-  const onSubmit = handleSubmit((data) => login.mutate(data))
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    defaultValues: {
+      email: localStorage.getItem(SAVED_EMAIL_KEY) ?? '',
+      password: '',
+      rememberMe: !!localStorage.getItem(SAVED_EMAIL_KEY),
+    },
+  })
+
+  const onSubmit = handleSubmit((data) => {
+    // Always persist the email so the field pre-fills on next visit
+    localStorage.setItem(SAVED_EMAIL_KEY, data.email)
+
+    login.mutate({
+      email: data.email,
+      password: data.password,
+      rememberMe: data.rememberMe,
+    })
+  })
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -40,6 +66,22 @@ export function LoginPage() {
               error={errors.password?.message}
               {...register('password', { required: 'Password is required' })}
             />
+
+            <div className="flex items-center gap-2">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                {...register('rememberMe')}
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-sm text-gray-600 cursor-pointer select-none"
+              >
+                Remember me
+              </label>
+            </div>
+
             <Button type="submit" className="w-full" loading={login.isPending}>
               Sign in
             </Button>
