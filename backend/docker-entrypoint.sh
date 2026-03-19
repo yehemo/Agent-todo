@@ -1,13 +1,13 @@
 #!/bin/sh
 set -e
 
-# Generate .env from environment variables (supports both local Docker and Railway)
+# Generate .env from environment variables injected by docker-compose
 cat > .env <<EOF
 APP_NAME=TaskFlow
-APP_ENV=${APP_ENV:-production}
+APP_ENV=local
 APP_KEY=
-APP_DEBUG=${APP_DEBUG:-false}
-APP_URL=${APP_URL:-http://localhost:8000}
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
 LOG_CHANNEL=stderr
 
@@ -18,7 +18,7 @@ DB_DATABASE=${DB_DATABASE:-todoapp}
 DB_USERNAME=${DB_USERNAME:-todo}
 DB_PASSWORD=${DB_PASSWORD:-secret}
 
-SANCTUM_STATEFUL_DOMAINS=${SANCTUM_STATEFUL_DOMAINS:-localhost:5173}
+SANCTUM_STATEFUL_DOMAINS=localhost:5173
 SESSION_DRIVER=database
 CACHE_STORE=database
 EOF
@@ -38,4 +38,4 @@ echo "Seeding demo data..."
 php artisan db:seed --class=DemoUserSeeder --force --no-interaction
 
 echo "Starting Laravel server..."
-php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+php artisan serve --host=0.0.0.0 --port=8000
