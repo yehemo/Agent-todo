@@ -58,3 +58,28 @@ Local MySQL was running on port 3306, conflicting with the Docker MySQL. Changed
 | Token revocation | Login doesn't revoke old tokens → old tokens still work | Check `personal_access_tokens` table count |
 | Soft deletes | Deleted tasks appear if someone queries without Eloquent | Verify `deleted_at IS NULL` in raw SQL |
 | Category SET NULL | Deleting category doesn't delete its tasks (intentional) | Tasks should show `category: null` |
+
+---
+
+## Open Bugs (found 2026-03-19, test run)
+
+### BUG-001: Logout does not revoke token — authenticated requests succeed after logout
+- Test: `LoginTest::test_logout_revokes_token`
+- Root cause: `Category` model uses `SoftDeletes`. `$category->delete()` issues a soft-delete, which sets `deleted_at` but leaves `category_id` FK on tasks intact. The migration has `nullOnDelete()` which fires on hard delete only (MySQL FK constraint). Because the record is only soft-deleted, the FK constraint never fires, so `category_id` is not nulled.
+- Actually: separate issue. `AuthController::logout` calls `currentAccessToken()->delete()` — this should work. Likely a Sanctum guard config issue in test environment where `actingAs()` bypasses token auth entirely, so there is no "current access token" to delete — the second request (after logout) goes through `actingAs()` session guard and still returns 200.
+- Fix location: `AuthController.php:53` — investigate whether `withToken()` in tests uses the Sanctum token guard. May need `sanctum` guard explicitly on the `/user` route.
+
+### BUG-002: Deleting a category does not null category_id on owned tasks
+- Test: `CategoryCrudTest::test_can_delete_category_and_tasks_become_uncategorized`
+- Root cause: `Category` model uses `SoftDeletes`. `$category->delete()` performs a soft-delete (sets `deleted_at`). MySQL's `nullOnDelete()` FK constraint only fires on a hard DELETE SQL statement. Soft-delete issues an UPDATE, not a DELETE, so the FK constraint never triggers and `category_id` remains set.
+- Fix location: `backend/app/Http/Controllers/Api/CategoryController.php:49` — `destroy()` must explicitly null `category_id` on related tasks before (or instead of) soft-deleting the category, OR the Category model needs a `deleting` boot hook to null the FK.
+
+### BUG-003: completion_rate returned as integer 30 instead of float 30.0 (and 0 instead of 0.0)
+- Tests: `StatsTest::test_completion_rate_is_calculated_correctly`, `StatsTest::test_returns_zero_stats_for_user_with_no_tasks`
+- Root cause: PHP's `round()` returns a float only when the result has a fractional part. `round(30.0, 1)` returns `float(30)` which JSON-encodes as `30`, not `30.0`. The zero case: `0.0` literal in PHP is cast to int 0 in the ternary because the `?:` branch returns `0.0` but PHP's json_encode serialises it as `0` when the value is effectively zero.
+- Fix location: `backend/app/Http/Controllers/Api/StatsController.php:33` — cast result to float: `(float) round(...)` and ensure the zero branch also returns `(float) 0`.
+
+### BUG-004: Tests missing from Docker image (infrastructure gap)
+- Dockerfile does not COPY `tests/` directory — only `app/`, `database/`, `routes/`, `config/cors.php`, `bootstrap/app.php` are copied.
+- Tests must be copied manually with `docker cp` before each test run, or the Dockerfile must be updated.
+- Fix location: `backend/Dockerfile` — add `COPY tests/ tests/` after the existing COPY lines.

@@ -20,7 +20,7 @@ A production-ready task management application built with **React + TypeScript**
 
 ## Features
 
-- **Authentication** — Register, login, logout with Sanctum token auth
+- **Authentication** — Register, login, logout with Sanctum token auth; "Remember Me" persists session across browser close
 - **Task Management** — Create, edit, delete tasks with title, description, priority, status, due date, and category
 - **Categories** — Organize tasks by color-coded categories
 - **Dashboard** — Stats overview with completion rate, priority breakdown, category progress
