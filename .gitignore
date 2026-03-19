@@ -1,0 +1,38 @@
+# ===========================
+# Frontend
+# ===========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env.*.local
+
+# ===========================
+# Backend
+# ===========================
+backend/vendor/
+backend/.env
+backend/storage/logs/*.log
+backend/storage/framework/cache/
+backend/storage/framework/sessions/
+backend/storage/framework/views/
+backend/bootstrap/cache/*.php
+
+# ===========================
+# Docker
+# ===========================
+# Keep docker-compose.yml and Dockerfiles — they're needed for deployment
+
+# ===========================
+# OS / Editor
+# ===========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ===========================
+# Claude local settings (keep agents, skills, memory — they're part of the project)
+# ===========================
+.claude/settings.local.json
