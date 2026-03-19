@@ -30,7 +30,7 @@ class StatsController extends Controller
             ->whereDate('due_date', '<', now()->toDateString())
             ->count();
 
-        $completionRate = $total > 0 ? round(($completed / $total) * 100, 1) : 0.0;
+        $completionRate = (float) ($total > 0 ? round(($completed / $total) * 100, 1) : 0);
 
         $priorityCounts = $user->tasks()
             ->select('priority', DB::raw('COUNT(*) as count'))
@@ -68,6 +68,6 @@ class StatsController extends Controller
                 'by_priority'     => $byPriority,
                 'by_category'     => $byCategory,
             ],
-        ]);
+        ], 200, [], JSON_PRESERVE_ZERO_FRACTION);
     }
 }

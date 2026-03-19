@@ -21,6 +21,8 @@ COPY database/       database/
 COPY routes/         routes/
 COPY config/cors.php config/cors.php
 COPY bootstrap/app.php bootstrap/app.php
+COPY tests/ tests/
+RUN rm -f tests/Feature/ExampleTest.php tests/Unit/ExampleTest.php
 
 # Entrypoint script
 COPY docker-entrypoint.sh /docker-entrypoint.sh

@@ -46,6 +46,7 @@ class CategoryController extends Controller
     {
         $this->authorize('delete', $category);
 
+        $category->tasks()->update(['category_id' => null]);
         $category->delete();
 
         return response()->json(null, 204);
